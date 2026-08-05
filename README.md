@@ -11,6 +11,7 @@ Minimal **React** client for Hermes Agent. Talks the real **TUI gateway JSON-RPC
 - `approval.request` → `approval.respond`
 - `clarify.request` → `clarify.respond`
 - `session.interrupt`
+- `session.list` / `session.resume` / `session.branch` — session sidebar with resume and branch
 
 ## Quick start
 
@@ -60,7 +61,6 @@ src/
 
 ## Next builds (intentionally not here)
 
-- Session list / resume / branch
 - Slash command palette (`commands.catalog` + `command.dispatch`)
 - File/image attach
 - Multi-session tabs

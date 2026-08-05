@@ -68,7 +68,9 @@ Protocol facts that shape the code:
 
 - `prompt.submit` is fire-and-forget for completion: its RPC ack is not the answer. Completion comes from stream events, which is why the hook gives it a 30-minute timeout while other requests get 60s.
 - Event payload field names vary by event (`tool_call_id` vs `tool_id` vs `id`, `args` vs `arguments`); `GatewayEventPayload` is a permissive union and helpers like `toolId()` normalize.
-- Sessions are created with `close_on_disconnect: true`, `source: 'web'`.
+- Sessions are created and resumed with `close_on_disconnect: false`, `source: 'web'` — they persist in the gateway after the tab closes (reaped by the gateway's idle TTL, default 6h). A new session gets its stored DB row only on its first message; until then it is absent from `session.list` and cannot be resumed.
+- `session.resume` takes a STORED id and returns a NEW live sid plus the full transcript in the RPC result — history is never replayed as events. Adopt `result.resumed` as the canonical stored id (compression chains rotate ids). `session.branch` requires a LIVE sid.
+- Every event frame carries `session_id`; the hook drops events that do not match the current live sid.
 
 Vite config proxies `/api` to the gateway (with WS), but the client currently connects directly to the gateway host/port; the proxy is only for a future same-origin setup.
 
