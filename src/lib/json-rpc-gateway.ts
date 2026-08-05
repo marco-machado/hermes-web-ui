@@ -31,7 +31,7 @@ export type ConnectionState = 'idle' | 'connecting' | 'open' | 'closed' | 'error
 export type GatewayRequestId = number | string
 
 interface JsonRpcFrame {
-  error?: { message?: string }
+  error?: { code?: number; message?: string }
   id?: GatewayRequestId | null
   method?: string
   params?: GatewayEvent
@@ -232,7 +232,11 @@ export class JsonRpcGatewayClient {
       if (!call) return
       this.clearPending(frame.id)
       if (frame.error) {
-        call.reject(new Error(frame.error.message || 'Hermes RPC failed'))
+        const error = new Error(frame.error.message || 'Hermes RPC failed') as Error & {
+          code?: number
+        }
+        error.code = frame.error.code
+        call.reject(error)
       } else {
         call.resolve(frame.result)
       }
