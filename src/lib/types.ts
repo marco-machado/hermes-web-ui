@@ -1,4 +1,4 @@
-export type Role = 'user' | 'assistant' | 'system'
+export type Role = 'user' | 'assistant' | 'system' | 'tool'
 
 export interface ChatMessage {
   id: string
@@ -7,6 +7,25 @@ export interface ChatMessage {
   pending?: boolean
   error?: string
   interim?: boolean
+  toolName?: string
+}
+
+export interface SessionSummary {
+  id: string
+  title: string
+  preview: string
+  startedAt: number
+  messageCount: number
+  source: string
+}
+
+export interface TranscriptRow {
+  role: Role
+  text?: string
+  name?: string
+  context?: string
+  display_kind?: string
+  row_id?: number | string
 }
 
 export interface ToolCall {
