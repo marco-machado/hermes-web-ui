@@ -11,6 +11,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 No test suite exists.
 
+## Git conventions
+
+Conventional Commits for messages and `type/short-description` for branch names, enforced by committed hooks in `.githooks/` plus the `.gitmessage` template. After a fresh clone, activate them once:
+
+```bash
+git config commit.template .gitmessage
+git config core.hooksPath .githooks
+```
+
 ## Hermes Agent source
 
 The Hermes Agent repo lives at `/Users/machado/.hermes/hermes-agent/`. Consult it as ground truth for the gateway protocol: `tui_gateway/` (the JSON-RPC gateway this UI talks to; `gateway/` there is a different subsystem) and `docs/`. It is a Python project (`hermes serve` / `hermes dashboard` come from there).
