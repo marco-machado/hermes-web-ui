@@ -1,0 +1,15 @@
+#!/bin/sh
+# Enforce branch naming: main, or type/short-description
+branch=$(git symbolic-ref --short HEAD 2>/dev/null) || exit 0
+
+case "$branch" in
+  main|master) exit 0 ;;
+esac
+
+pattern='^(feat|fix|chore|docs|refactor|test|build|ci|perf|style)/[a-z0-9._-]+$'
+if ! printf '%s' "$branch" | grep -Eq "$pattern"; then
+  echo "pre-push: branch name must be main or type/short-description" >&2
+  echo "  types: feat fix chore docs refactor test build ci perf style" >&2
+  echo "  got: $branch" >&2
+  exit 1
+fi

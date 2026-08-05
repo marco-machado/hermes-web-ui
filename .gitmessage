@@ -1,0 +1,8 @@
+# <type>(<scope>): <subject>   (max 72 chars, imperative mood)
+#
+# type: feat | fix | chore | docs | refactor | test | build | ci | perf | style
+# scope (optional): gateway | hook | ui | smoke | config
+#
+# Body: what and why, wrapped at 72 chars.
+#
+# BREAKING CHANGE: <description>
