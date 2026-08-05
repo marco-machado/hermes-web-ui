@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useHermesChat } from './hooks/useHermesChat'
-import {
-  loadConnection,
-  saveConnection,
-  type ConnectionConfig,
-} from './lib/types'
+import { loadConnection, type ConnectionConfig } from './lib/types'
 import './App.css'
 
 const STATE_LABEL: Record<string, string> = {
@@ -46,7 +42,6 @@ export default function App() {
 
   async function onConnect(e?: FormEvent) {
     e?.preventDefault()
-    saveConnection(cfg)
     setBusyConnect(true)
     try {
       await chat.connect(cfg)

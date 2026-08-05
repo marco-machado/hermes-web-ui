@@ -90,24 +90,11 @@ export interface GatewayEventPayload {
   response_previewed?: boolean
 }
 
-export const STORAGE_KEY = 'hermes-web-ui:connection'
-
 export function loadConnection(): ConnectionConfig {
-  const defaults: ConnectionConfig = {
+  return {
     host: import.meta.env.VITE_HERMES_HOST || '127.0.0.1',
     port: import.meta.env.VITE_HERMES_PORT || '9119',
     token: import.meta.env.VITE_HERMES_TOKEN || '',
     cwd: import.meta.env.VITE_HERMES_CWD || '',
   }
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return defaults
-    return { ...defaults, ...JSON.parse(raw) }
-  } catch {
-    return defaults
-  }
-}
-
-export function saveConnection(cfg: ConnectionConfig): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg))
 }
