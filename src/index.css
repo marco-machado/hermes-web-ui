@@ -1,0 +1,49 @@
+:root {
+  color-scheme: dark;
+  --bg: #0c0e12;
+  --panel: #12161d;
+  --text: #e8edf5;
+  --muted: #8b95a8;
+  --border: #243041;
+  --accent: #3d8bfd;
+  --accent-2: #7dd3fc;
+  --ok: #34d399;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+    sans-serif;
+  line-height: 1.45;
+  font-weight: 400;
+  color: var(--text);
+  background: radial-gradient(1200px 600px at 10% -10%, #152036 0%, transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, #1a1430 0%, transparent 50%), var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+a {
+  color: var(--accent-2);
+}
