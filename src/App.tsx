@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type SubmitEvent } from 'react'
 import { useHermesChat } from './hooks/useHermesChat'
 import { loadConnection, type ConnectionConfig } from './lib/types'
 import './App.css'
@@ -40,7 +40,7 @@ export default function App() {
     return 'muted'
   }, [chat.connState])
 
-  async function onConnect(e?: FormEvent) {
+  async function onConnect(e?: SubmitEvent) {
     e?.preventDefault()
     setBusyConnect(true)
     try {
@@ -63,7 +63,7 @@ export default function App() {
     }
   }
 
-  async function onSend(e?: FormEvent) {
+  async function onSend(e?: SubmitEvent) {
     e?.preventDefault()
     if (!canSend) return
     const text = draft
