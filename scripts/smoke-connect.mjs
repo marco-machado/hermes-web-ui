@@ -145,8 +145,34 @@ try {
     console.log(`events so far: ${events.slice(0, 8).join(', ') || '(none yet)'}`)
   }
 
+  // A fresh session has no DB row until its first message, so it cannot be
+  // resumed. Resume the most recent stored session instead, skipping live ones
+  // (resume re-points a live session's event stream at this WS).
+  const listed = await request('session.list', { limit: 50 })
+  const rows = listed?.sessions || []
+  console.log(`session.list ok (${rows.length} rows)`)
+
+  const active = await request('session.active_list', {})
+  const liveKeys = new Set((active?.sessions || []).map(s => s.session_key))
+  const target = rows.find(s => !liveKeys.has(s.id))
+  if (!target) {
+    console.log('session.resume skipped: no non-live stored session available')
+  } else {
+    const resumed = await request('session.resume', {
+      session_id: target.id,
+      close_on_disconnect: true,
+      source: 'web',
+    })
+    if (!resumed?.session_id) {
+      fail(`session.resume missing session_id: ${JSON.stringify(resumed)}`)
+    }
+    console.log(
+      `session.resume ok live=${resumed.session_id} resumed=${resumed.resumed} messages=${resumed.message_count}`,
+    )
+  }
+
   ws.close()
-  console.log('PASS: gateway connect + session.create')
+  console.log('PASS: gateway connect + session.create + list + resume')
   process.exit(0)
 } catch (e) {
   try {
