@@ -21,14 +21,21 @@ export default function App() {
   const [draft, setDraft] = useState('')
   const [clarifyDraft, setClarifyDraft] = useState('')
   const [busyConnect, setBusyConnect] = useState(false)
+  const [busySession, setBusySession] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   }, [chat.messages, chat.tools, chat.approval, chat.clarify])
 
-  const connected = chat.connState === 'open' && Boolean(chat.sessionId)
-  const canSend = connected && !busyConnect && draft.trim().length > 0
+  const wsOpen = chat.connState === 'open'
+  const hasSession = Boolean(chat.sessionId)
+  const canSend = wsOpen && hasSession && !busyConnect && draft.trim().length > 0
+  const canBranch =
+    hasSession &&
+    !chat.running &&
+    !busySession &&
+    chat.messages.some(m => m.role === 'user' || m.role === 'assistant')
 
   const statusTone = useMemo(() => {
     if (chat.connState === 'open') return 'ok'
@@ -47,6 +54,17 @@ export default function App() {
       /* surfaced in chat.error */
     } finally {
       setBusyConnect(false)
+    }
+  }
+
+  async function withSessionBusy(action: () => Promise<unknown>) {
+    setBusySession(true)
+    try {
+      await action()
+    } catch {
+      /* surfaced in chat.error */
+    } finally {
+      setBusySession(false)
     }
   }
 
@@ -120,7 +138,7 @@ export default function App() {
           />
         </label>
         <div className="conn-actions">
-          {!connected ? (
+          {!wsOpen ? (
             <button type="submit" disabled={busyConnect || !cfg.token.trim()}>
               {busyConnect ? 'Connecting…' : 'Connect'}
             </button>
@@ -136,6 +154,16 @@ export default function App() {
         <span>session {chat.sessionId ?? '—'}</span>
         <span>stored {chat.storedSessionId ?? '—'}</span>
         <span>model {chat.model || '—'}</span>
+        {wsOpen && (
+          <button
+            type="button"
+            className="ghost"
+            disabled={!canBranch}
+            onClick={() => void withSessionBusy(() => chat.branchSession())}
+          >
+            Branch
+          </button>
+        )}
       </div>
 
       {chat.error && (
@@ -147,36 +175,91 @@ export default function App() {
         </div>
       )}
 
-      <main className="main">
-        <section className="thread" aria-live="polite">
-          {chat.messages.length === 0 && (
-            <div className="empty">
-              <h2>Talk to the real Hermes agent</h2>
-              <ol>
-                <li>
-                  Point host/port at a running <code>hermes serve</code> (or dashboard) gateway
-                </li>
-                <li>Paste the session token and Connect</li>
-                <li>Send a prompt — tools, approvals, and streaming land here</li>
-              </ol>
+      <div className={`workspace${wsOpen ? ' with-sidebar' : ''}`}>
+        {wsOpen && (
+          <aside className="sidebar">
+            <div className="sidebar-head">
+              <button
+                type="button"
+                disabled={busySession}
+                onClick={() => void withSessionBusy(() => chat.startSession())}
+              >
+                New session
+              </button>
+              <button
+                type="button"
+                className="ghost"
+                disabled={busySession}
+                onClick={() => void chat.refreshSessions()}
+              >
+                Refresh
+              </button>
             </div>
-          )}
+            <div className="session-list">
+              {chat.sessions.length === 0 && <p className="muted">No stored sessions</p>}
+              {chat.sessions.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  className={`session-item${s.id === chat.storedSessionId ? ' active' : ''}`}
+                  disabled={busySession}
+                  onClick={() => void withSessionBusy(() => chat.resumeSession(s.id))}
+                >
+                  <span className="session-title">{s.title || s.preview || s.id}</span>
+                  <span className="session-meta">
+                    {s.messageCount} msgs
+                    {s.source ? ` · ${s.source}` : ''}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </aside>
+        )}
 
-          {chat.messages.map(m => (
-            <article
-              key={m.id}
-              className={`msg role-${m.role}${m.interim ? ' interim' : ''}${m.error ? ' errored' : ''}`}
-            >
-              <header>
-                <span className="role">{m.role}</span>
-                {m.pending && <span className="tag">streaming</span>}
-                {m.interim && <span className="tag">interim</span>}
-                {m.error && <span className="tag bad">error</span>}
-              </header>
-              <pre className="body">{m.text || (m.pending ? '…' : '')}</pre>
-              {m.error && <p className="err">{m.error}</p>}
-            </article>
-          ))}
+        <main className="main">
+        <section className="thread" aria-live="polite">
+          {chat.messages.length === 0 &&
+            (wsOpen && !hasSession ? (
+              <div className="empty">
+                <h2>Pick a session</h2>
+                <p>Resume one from the list, or start a new session.</p>
+              </div>
+            ) : (
+              <div className="empty">
+                <h2>Talk to the real Hermes agent</h2>
+                <ol>
+                  <li>
+                    Point host/port at a running <code>hermes serve</code> (or dashboard) gateway
+                  </li>
+                  <li>Paste the session token and Connect</li>
+                  <li>Send a prompt — tools, approvals, and streaming land here</li>
+                </ol>
+              </div>
+            ))}
+
+          {chat.messages.map(m =>
+            m.role === 'tool' ? (
+              <div key={m.id} className="msg role-tool">
+                <span className="role">tool</span>
+                <span className="tool-name">{m.toolName}</span>
+                {m.text && <span className="tool-ctx">{m.text}</span>}
+              </div>
+            ) : (
+              <article
+                key={m.id}
+                className={`msg role-${m.role}${m.interim ? ' interim' : ''}${m.error ? ' errored' : ''}`}
+              >
+                <header>
+                  <span className="role">{m.role}</span>
+                  {m.pending && <span className="tag">streaming</span>}
+                  {m.interim && <span className="tag">interim</span>}
+                  {m.error && <span className="tag bad">error</span>}
+                </header>
+                <pre className="body">{m.text || (m.pending ? '…' : '')}</pre>
+                {m.error && <p className="err">{m.error}</p>}
+              </article>
+            ),
+          )}
 
           {chat.tools.length > 0 && (
             <div className="tools">
@@ -262,14 +345,17 @@ export default function App() {
 
           <div ref={bottomRef} />
         </section>
-      </main>
+        </main>
+      </div>
 
       <form className="composer" onSubmit={onSend}>
         <textarea
           value={draft}
           onChange={e => setDraft(e.target.value)}
-          placeholder={connected ? 'Message Hermes…' : 'Connect first'}
-          disabled={!connected}
+          placeholder={
+            hasSession ? 'Message Hermes…' : wsOpen ? 'Start or resume a session' : 'Connect first'
+          }
+          disabled={!hasSession}
           rows={3}
           onKeyDown={e => {
             if (e.key === 'Enter' && !e.shiftKey) {
