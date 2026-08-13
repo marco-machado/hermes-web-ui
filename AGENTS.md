@@ -77,3 +77,17 @@ Vite config proxies `/api` to the gateway (with WS), but the client currently co
 ## Intentionally out of scope (see README)
 
 Session list/resume/branch, slash command palette, attachments, multi-session tabs, theming. Do not add these unless asked.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live as GitHub issues in this repo, driven through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Five canonical triage roles mapped to GitHub label strings (defaults: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context — one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
